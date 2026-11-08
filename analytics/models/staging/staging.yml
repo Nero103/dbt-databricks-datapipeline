@@ -29,8 +29,14 @@ models:
         description: Time job was job_posted_at
       - name: job_salary
         description: Salary described via posting
-      - name: job_extensions_raw
-        description: Raw extension JSON
+      - name: has_no_degree_mentioned
+        description: Posting lists no degree mentioned in the extensions
+      - name: has_paid_time_off
+        description: Posting lists paid time off mentioned in the extensions
+      - name: has_health_insurance
+        description: Posting lists health insurance mentioned in the extensions
+      - name: has_dental_insurance
+        description: Posting lists dental insurance mentioned in the extensions
 
   - name: stg_job_skills
     description: >
