@@ -29,6 +29,16 @@ models:
         description: Time job was job_posted_at
       - name: job_salary
         description: Salary described via posting
+      - name: salary_min
+        description: Lower bound of parsed job salary
+      - name: salary_max
+        description: Upper bound of parsed job salary
+      - name: salary_avg
+        description: Mid point of parsed job salary range (always pair with salary_currency)
+      - name: salary_period
+        description: Pay period parsed from job_salary
+      - name: salary_currency
+        description: Currency parsed from job salary, NULL if no entry in job salary column
       - name: has_no_degree_mentioned
         description: Posting lists no degree mentioned in the extensions
       - name: has_paid_time_off
