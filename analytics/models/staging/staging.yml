@@ -5,8 +5,14 @@ models:
     columns:
       - name: job_id
         description: Scrapers posting job_id
+        data_tests:
+          - not_null
       - name: search_term
         description: The role the scraper searched for
+        data_tests:
+         - accepted_values:
+             arguments:
+               values: ['Data Engineer', 'Data Analyst', 'Data Scientist']
       - name: search_date
         description: Date scraped
       - name: searched_at_time
@@ -23,6 +29,12 @@ models:
         description: job platform posting was scraped from
       - name: job_schedule_type
         description: As scraped
+        data_tests:
+         - accepted_values:
+             arguments:
+               values: ['Full-time', 'Part-time', 'Contactor', 'Internship']
+             config:
+               severity: warn
       - name: job_work_from_home
         description: True when posting is flagged remote
       - name: job_posted_at
@@ -31,8 +43,12 @@ models:
         description: Salary described via posting
       - name: salary_min
         description: Lower bound of parsed job salary
+        data_tests:
+          - non_negative
       - name: salary_max
         description: Upper bound of parsed job salary
+        data_tests:
+          - non_negative
       - name: salary_avg
         description: Mid point of parsed job salary range (always pair with salary_currency)
       - name: salary_period
