@@ -74,3 +74,23 @@ models:
         description: Skill key for the pair
       - name: skill_keyword
         description: Skill text as extracted and trimmed
+
+unit_tests:
+  - name: test_parse_salart_shape
+    description: "This handles a range, single value, and no salary"
+    model: stg_job_postings
+    given:
+      - input: source('jobs', 'raw_job_postings')
+        rows:
+          - {job_id: 1, job_salary: "100K–186K a year"}
+          - {job_id: 2, job_salary: "32.50 an hour"}
+          - {job_id: 3, job_salary: null}
+          - {job_id: 4, job_salary: "98700 a year"}
+          - {job_id: 5, job_salary: "38000–45000 a year"}
+    expect:
+      rows:
+        - {job_id: 1, salary_min: 100000, salary_max: 186000}
+        - {job_id: 2, salary_min: 32.5, salary_max: 32.5}
+        - {job_id: 3, salary_min: null, salary_max: null}
+        - {job_id: 4, salary_min: 98700, salary_max: 98700}
+        - {job_id: 5, salary_min: 38000, salary_max: 45000}
