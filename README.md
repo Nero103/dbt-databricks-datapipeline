@@ -19,13 +19,13 @@ A production dbt pipeline on **Databricks** over 843,097 raw job-posting scrapes
 | **Tests** | generic, singular, and custom generic | [`analytics/tests/`](analytics/tests/) + the properties YAMLs |
 | **Environments** | dev/prod as catalogs: dev from the laptop, prod only from the job | Unity Catalog: `dev` + `prod` |
 | **Orchestration** | scheduled Databricks Job, zero secrets | Databricks → Jobs & Pipelines |
-| **Analyses** | questions, kept next to the models that answer them | [`analytics/analyses/`](analytics/analyses/) |
+| **Independent analyses** | Remote skill demand by work arrangement and job role, benefit-mention rates by employment type | [`analytics/analyses/`](analytics/analyses/) |
 
 ---
 
 ## The dbt Pipeline
 
-Raw scrapes flow through the medallion layers — raw → staging → intermediate → the star-schema marts — while snapshots capture history off staging. The lineage graph below is every model dbt builds:
+Raw scrapes flow through the medallion layers such as raw → staging → intermediate → the star-schema marts, while snapshots capture history off staging. The lineage graph below is relevat to the fact table build:
 
 ![dbt lineage graph](img/lineage.png)
 
@@ -40,10 +40,12 @@ And the dbt features doing the work:
 | Overriding a built-in | `generate_schema_name` — schemas land where the folder says |
 | Seeds | the skill taxonomy: version-controlled reference data |
 | Test-driven cleaning | `not_null` surfaced 6,255 real id-less postings; dropped with eyes open, documented |
-| Singular + custom tests | `assert_salaries_sane` caught 27 typed `…–1M` salary ceilings the schema tests never would |
+| Singular + custom tests | `assert_salary_norm` caught 27 typed `…–1M` salary ceilings the schema tests never would |
 | SCD2 snapshots | `check` strategy on 13 content columns; `searched_at_time` dates the versions |
 | Incremental | merge on `job_id`; `is_incremental()` + a `search_date` high-water filter |
 | Environments | `dev` catalog from the local profile, `prod` catalog only from the scheduled job |
+| Extended unit testing | Added salary parsing cases for single annual values and numeric ranges without `K` suffixes, validating expected min/max outputs |
+| Independent SQL analyses | Group-specific percentages, conditional aggregation, and `window-function rankings` across job postings |
 
 `dbt build` compiles SQL, materializes models, and fails the run if any test fails, same command locally and in the scheduled job.
 
@@ -54,7 +56,7 @@ And the dbt features doing the work:
 **Databricks** owns the runtime including storage, compute, and the schedule, one platform:
 
 - **Dev and prod as catalogs**: laptop builds land in the `dev` catalog; only the scheduled job writes the same schemas into `prod`
-- **Scheduled Databricks Job** runs the whole pipeline nightly: `load_raw` (the ingest notebook), then `dbt deps` → `dbt debug` → `dbt build`, pulling the repo straight from GitHub
+- **Scheduled Databricks Job** runs the whole pipeline monthly: `load_raw` (the ingest notebook), then `dbt deps` → `dbt debug` → `dbt build`, pulling the repo straight from GitHub
 - **Zero secrets**: the job generates a temporary-credentials profile against the attached warehouse and revokes it after the run, no tokens in the repo, no CI secrets
 
 Any BI tool connects straight to the warehouse like SQL editor, Excel, Power BI, and Tableau all query the `prod` catalog directly.
@@ -71,11 +73,35 @@ The marts keep each job's **latest** scrape — the snapshot table keeps **every
 
 ---
 
+## Independent Analyses
+
+Extended the tutorial with three SQL analyses and additional unit-test scenarios to investigate skill demand, employment benefits, and data quality.
+
+| Analysis | What I Found | SQL |
+| --- | --- | --- |
+**Remote skill demand** | Python (60.61%), SQL (56.64%), and AWS (32.33%) led remote-flagged postings | [`remote_vs_nonremote_demand_skills.sql`](analytics\analyses\remote_vs_nonremote_demand_skills.sql)
+| **Skill demand by role** | Remote-flagged Data Analyst postings mentioned Tableau 8.00 percentage points more often; Data Engineer postings with unspecified remote status mentioned Spark 10.64 points more often | [`remote_vs_nonremote_demand_skills_by_job.sql`](analytics\analyses\remote_vs_nonremote_demand_skills_by_job.sql)
+| **Benefits by employment type** | Full-time/Part-time postings had a 79.66% health-insurance mention rate; employer-level investigation identified heavy concentration | [`benefits_by_employment_type.sql`](analytics\analyses\benefits_by_employment_type.sql) |
+
+**What the results revealed:**
+
+- **Remote classification matters**: job_work_from_home contained TRUE and NULL, not FALSE. Classified postings as Remote_Flagged or Unspecified rather than assuming NULL meant on-site.
+
+- **Role-specific demand**: Added a job_title variable to filter by the scraper's search_term (Data Analyst, Data Engineer, or Data Scientist). Skill rankings and percentage differences varied by role.
+
+- **Employer concentration**: Capital One and Walmart represented 63.5% of combined Full-time/Part-time postings and 79.2% of their health-insurance mentions, substantially influencing the category's 79.66% result.
+
+- **Additional unit tests**: Expanded salary parsing validation to include single annual values and numeric ranges without K suffixes. Testing also exposed sensitivity to salary-range dash formats.
+
+**Limitations**: Skill percentages measure mentions within each posting group, not the entire job market. Unspecified remote status does not mean on-site. Benefit flags indicate mentions in scraped postings, not confirmed benefits or employee eligibility.
+
+---
+
 ## Docs
 
 Structure, tests, and column descriptions were written along the way — the docs site is a rendering of work already done:
 
-**→ [lukebarousse.github.io/dbt_Analytics_Engineering_Course/project2/](https://lukebarousse.github.io/dbt_Analytics_Engineering_Course/project2/)**
+**→ [nero103.github.io/dbt-databricks-datapipeline](https://nero103.github.io/dbt-databricks-datapipeline/)**
 
 The site shows:
 
@@ -96,7 +122,7 @@ uv sync && source .venv/bin/activate     # env
 dbt deps                                 # macro packages (dbt_utils) — dbt_packages/ isn't committed
 dbt debug                                # connection (profiles.yml holds your own host/token)
 dbt build                                # models + tests + seed
-dbt snapshot                             # one SCD2 pass (nightly in production)
+dbt snapshot                             # one SCD2 pass (monthly in production)
 ```
 
 Backfill a year of snapshot history in one query: paste [`scripts/backfill_job_postings_snapshot.sql`](scripts/backfill_job_postings_snapshot.sql) into the SQL editor — `dbt snapshot` takes over seamlessly afterwards.
@@ -114,11 +140,11 @@ Backfill a year of snapshot history in one query: paste [`scripts/backfill_job_p
 │   ├── seeds/                        # the skill taxonomy
 │   ├── macros/                       # parse_salary + generate_schema_name
 │   ├── tests/                        # singular + custom generic
-│   └── analyses/                     # the questions
+│   └── analyses/                     # the questions + independent analyses
 ├── scripts/                          # load_raw.py (the job's ingest task) + snapshot backfill
 └── img/                              # README assets
 ```
 
 ---
 
-*Reference build for Project #2 of the [dbt for Data Analytics & Engineering course](https://www.lukebarousse.com) (lessons 3.01–4.02) — students build this repo themselves and compare against this version. Dataset: real job postings scraped daily, July 2025 – June 2026.*
+*Reference build for Project #2 of the [dbt for Data Analytics & Engineering course](https://www.lukebarousse.com) (lessons 3.01–4.02) — students build this repo themselves and compare against this version. with my independent extensions covering remote skill demand, role-specific comparisons, employment benefits, and additional salary parsing unit tests. Dataset: job postings scraped daily, July 2025 – June 2026*
