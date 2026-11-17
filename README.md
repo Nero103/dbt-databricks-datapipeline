@@ -79,9 +79,9 @@ Extended the tutorial with three SQL analyses and additional unit-test scenarios
 
 | Analysis | What I Found | SQL |
 | --- | --- | --- |
-**Remote skill demand** | Python (60.61%), SQL (56.64%), and AWS (32.33%) led remote-flagged postings | [`remote_vs_nonremote_demand_skills.sql`](analytics\analyses\remote_vs_nonremote_demand_skills.sql)
-| **Skill demand by role** | Remote-flagged Data Analyst postings mentioned Tableau 8.00 percentage points more often; Data Engineer postings with unspecified remote status mentioned Spark 10.64 points more often | [`remote_vs_nonremote_demand_skills_by_job.sql`](analytics\analyses\remote_vs_nonremote_demand_skills_by_job.sql)
-| **Benefits by employment type** | Full-time/Part-time postings had a 79.66% health-insurance mention rate; employer-level investigation identified heavy concentration | [`benefits_by_employment_type.sql`](analytics\analyses\benefits_by_employment_type.sql) |
+**Remote skill demand** | Python (60.61%), SQL (56.64%), and AWS (32.33%) led remote-flagged postings | [`remote_vs_nonremote_demand_skills.sql`](analytics/analyses/remote_vs_nonremote_demand_skills.sql)
+| **Skill demand by role** | Remote-flagged Data Analyst postings mentioned Tableau 8.00 percentage points more often; Data Engineer postings with unspecified remote status mentioned Spark 10.64 points more often | [`remote_vs_nonremote_demand_skills_by_job.sql`](analytics/analyses/remote_vs_nonremote_demand_skills_by_job.sql)
+| **Benefits by employment type** | Full-time/Part-time postings had a 79.66% health-insurance mention rate; employer-level investigation identified heavy concentration | [`benefits_by_employment_type.sql`](analytics/analyses/benefits_by_employment_type.sql) |
 
 **What the results revealed:**
 
